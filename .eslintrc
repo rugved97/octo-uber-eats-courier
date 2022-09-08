@@ -1,0 +1,79 @@
+{
+  "root": true,
+  "ignorePatterns": ["**/__mocks__/*"],
+  "plugins": ["spellcheck"],
+  "rules": {
+    "comma-spacing": [2, { "before": false, "after": true }],
+    "no-trailing-spaces": 2,
+    "spellcheck/spell-checker": [
+      "warn",
+      {
+        "ignoreRequire": true,
+        "skipWords": [],
+        "skipWordIfMatch": ["^x{0,4}[sml][mdg]?$"]
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["*.ts", "*.tsx"],
+      "parser": "@typescript-eslint/parser",
+      "parserOptions": {
+        "project": "./tsconfig.json",
+        "ecmaVersion": 6
+      },
+      "plugins": ["@typescript-eslint", "react", "react-native", "spellcheck"],
+      "env": {
+        "react-native/react-native": true
+      },
+      "extends": ["eslint:recommended", "airbnb-typescript", "prettier"],
+      "rules": {
+        "consistent-return": 0,
+        "no-alert": 2,
+        "no-duplicate-imports": 2,
+        "max-lines": [1, 500],
+        "newline-before-return": 2,
+        "import/no-extraneous-dependencies": 0,
+        "react-native/no-unused-styles": 2,
+        "react-native/split-platform-components": 2,
+        "react-native/no-inline-styles": 2,
+        "react-native/no-color-literals": 2,
+        "react-native/no-raw-text": 2,
+        "react-native/no-single-element-style-arrays": 2,
+        "react/require-default-props": 0,
+        "react/no-array-index-key": 0,
+        "react/jsx-props-no-spreading": 0,
+        "import/prefer-default-export": 0,
+        "@typescript-eslint/indent": 0,
+        "react/prop-types": 0,
+        "@typescript-eslint/lines-between-class-members": 0,
+        "react/jsx-wrap-multilines": ["warn", { "declaration": false, "assignment": false }],
+        "padding-line-between-statements": [
+          "warn",
+          { "blankLine": "always", "prev": "const", "next": "export" }
+        ],
+        "class-methods-use-this": 0,
+        "no-param-reassign": [
+          "error",
+          { "props": true, "ignorePropertyModificationsForRegex": ["^draft", "^state"] }
+        ],
+        "no-underscore-dangle": ["error", { "allowAfterThis": true }]
+      }
+    },
+    {
+      "files": ["*.json"],
+      "excludedFiles": ["tsconfig.json"],
+      "plugins": ["json"],
+      "extends": ["plugin:json/recommended"]
+    },
+    {
+      "files": ["tsconfig.json"],
+      "plugins": ["json"],
+      "extends": ["plugin:json/recommended-with-comments"]
+    },
+    {
+      "files": ["jest.setup.js", "jest-global.setup.js"],
+      "parser": "babel-eslint"
+    }
+  ]
+}
