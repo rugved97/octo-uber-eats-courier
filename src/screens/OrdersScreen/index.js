@@ -1,18 +1,27 @@
-import { useMemo, useRef } from 'react';
-import { View, Text, FlatList, Dimensions } from 'react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { View, Text, Dimensions } from 'react-native';
 import React from 'react';
-import BottomSheet from '@gorhom/bottom-sheet';
+import BottomSheet, { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import orders from '../../../assets/data/orders.json';
 import OrderItem from '../../components/OrderItem';
 import MapView, { Marker } from 'react-native-maps';
 import { Entypo } from '@expo/vector-icons';
 import useWindowDimensions from 'react-native/Libraries/Utilities/useWindowDimensions';
-
+import { DataStore } from 'aws-amplify';
+import { Order, OrderStatus } from '../../models';
 const OrdersScreen = () => {
+  const [orders, setOrders] = useState([]);
   const bottomSheetRef = useRef(null);
   const { width, height } = useWindowDimensions();
 
   const snapPoints = useMemo(() => ['12%', '95%'], []);
+
+  useEffect(() => {
+    DataStore.query(Order, order => order.status('eq', OrderStatus.READY_FOR_PICKUP)).then(
+      setOrders,
+    );
+  }, []);
+
   return (
     <View style={{ backgroundColor: 'lightblue', flex: 1 }}>
       <MapView style={{ height: height, width: width }} showsUserLocation followsUserLocation>
@@ -38,7 +47,7 @@ const OrdersScreen = () => {
             Available Orders {orders.length}
           </Text>
         </View>
-        <FlatList data={orders} renderItem={({ item }) => <OrderItem order={item} />} />
+        <BottomSheetFlatList data={orders} renderItem={({ item }) => <OrderItem order={item} />} />
       </BottomSheet>
     </View>
   );

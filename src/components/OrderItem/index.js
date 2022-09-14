@@ -1,8 +1,19 @@
 import { StyleSheet, Text, View, Image, Pressable } from 'react-native';
 import { Entypo } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { DataStore } from 'aws-amplify';
+import { UberUser } from '../../models';
+import { useEffect, useState } from 'react';
+const DEFAULT_IMAGE =
+  'https://image.shutterstock.com/image-photo/restaurant-chilling-out-classy-lifestyle-260nw-507639565.jpg';
 const OrderItem = ({ order }) => {
   const navigation = useNavigation();
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    DataStore.query(UberUser, order.userID).then(setUser);
+  }, []);
+
   return (
     <Pressable
       style={{
@@ -16,7 +27,9 @@ const OrderItem = ({ order }) => {
       onPress={() => navigation.navigate('OrdersDeliveryScreen', { id: order.id })}
     >
       <Image
-        source={{ uri: order.Restaurant.image }}
+        source={{
+          uri: order.Restaurant.image.startsWith('http') ? order.Restaurant.image : DEFAULT_IMAGE,
+        }}
         style={{
           height: '100%',
           width: '25%',
@@ -29,8 +42,8 @@ const OrderItem = ({ order }) => {
         <Text style={{ color: 'grey' }}>{order.Restaurant.address}</Text>
 
         <Text style={{ marginTop: 10 }}>Delivery Details</Text>
-        <Text style={{ color: 'grey' }}>{order.User.name}</Text>
-        <Text style={{ color: 'grey' }}>{order.User.address}</Text>
+        <Text style={{ color: 'grey' }}>{user?.name}</Text>
+        <Text style={{ color: 'grey' }}>{user?.address}</Text>
       </View>
       <View
         style={{
