@@ -11,14 +11,28 @@ const OrderContextProvider = ({ children }) => {
   const [order, setOrder] = useState(null);
   const [user, setUser] = useState(null);
   const [dishes, setDishes] = useState(null);
-  const acceptOrder = () => {
+  useEffect(() => {
+    if (!order) {
+      return;
+    }
+    const subscription = DataStore.observe(Order, order.id).subscribe(({ opType, element }) => {
+      if (opType === 'UPDATE') {
+        fetchOrder(element.id);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [order?.id]);
+
+  const acceptOrder = async () => {
     //Update order, change status, assign driver to order
-    DataStore.save(
+    const updatedOrder = await DataStore.save(
       Order.copyOf(order, updated => {
         updated.status = OrderStatus.ACCEPTED; //Update to accepted
         updated.Courier = dbCourier;
       }),
-    ).then(setOrder);
+    );
+    setOrder(updatedOrder);
   };
   const pickUpOrder = () => {
     //Update order, change status, assign driver to order
@@ -29,14 +43,15 @@ const OrderContextProvider = ({ children }) => {
       }),
     ).then(setOrder);
   };
-  const completeOrder = () => {
+  const completeOrder = async () => {
     //Update order, change status, assign driver to order
-    DataStore.save(
+    const updatedOrder = await DataStore.save(
       Order.copyOf(order, updated => {
         updated.status = OrderStatus.COMPLETED; //Update to accepted
         updated.Courier = dbCourier;
       }),
-    ).then(setOrder);
+    );
+    setOrder(updatedOrder);
   };
 
   const fetchOrder = async id => {

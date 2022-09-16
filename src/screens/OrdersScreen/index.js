@@ -1,41 +1,73 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, Dimensions } from 'react-native';
+import { View, Text, ActivityIndicator } from 'react-native';
 import React from 'react';
+import * as Location from 'expo-location';
 import BottomSheet, { BottomSheetFlatList } from '@gorhom/bottom-sheet';
-import orders from '../../../assets/data/orders.json';
 import OrderItem from '../../components/OrderItem';
-import MapView, { Marker } from 'react-native-maps';
-import { Entypo } from '@expo/vector-icons';
+import MapView from 'react-native-maps';
 import useWindowDimensions from 'react-native/Libraries/Utilities/useWindowDimensions';
 import { DataStore } from 'aws-amplify';
-import { Order, OrderStatus } from '../../models';
+import { Courier, Order, OrderStatus } from '../../models';
+import CustomMarker from '../../components/CustomMarker';
+import { useAuthContext } from '../../contexts/AuthContext';
 const OrdersScreen = () => {
   const [orders, setOrders] = useState([]);
   const bottomSheetRef = useRef(null);
+  const [driverLocation, setDriverLocation] = useState(null);
   const { width, height } = useWindowDimensions();
 
   const snapPoints = useMemo(() => ['12%', '95%'], []);
 
-  useEffect(() => {
+  const fetchOrders = () => {
     DataStore.query(Order, order => order.status('eq', OrderStatus.READY_FOR_PICKUP)).then(
       setOrders,
     );
+  };
+
+  useEffect(() => {
+    fetchOrders();
+    const subscription = DataStore.observe(Order).subscribe(msg => {
+      if (msg.opType === 'UPDATE') {
+        fetchOrders();
+      }
+
+      return () => subscription.unsubscribe();
+    });
   }, []);
+
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        return;
+      }
+      let location = await Location.getCurrentPositionAsync();
+      setDriverLocation({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      });
+    })();
+  }, []);
+
+  if (!driverLocation) {
+    return <ActivityIndicator size={'large'} color="gray" />;
+  }
 
   return (
     <View style={{ backgroundColor: 'lightblue', flex: 1 }}>
-      <MapView style={{ height: height, width: width }} showsUserLocation followsUserLocation>
+      <MapView
+        style={{ height: height, width: width }}
+        initialRegion={{
+          latitude: driverLocation.latitude,
+          longitude: driverLocation.longitude,
+          latitudeDelta: 0.07,
+          longitudeDelta: 0.07,
+        }}
+        showsUserLocation
+        followsUserLocation
+      >
         {orders.map(order => (
-          <Marker
-            key={order.id}
-            title={order.Restaurant.name}
-            description={order.Restaurant.address}
-            coordinate={{ latitude: order.Restaurant.lat, longitude: order.Restaurant.lng }}
-          >
-            <View style={{ backgroundColor: 'green', padding: 5, borderRadius: 15 }}>
-              <Entypo name="shop" size={24} color="white" />
-            </View>
-          </Marker>
+          <CustomMarker data={order.Restaurant} type="RESTAURANT" key={order?.id} />
         ))}
       </MapView>
       <BottomSheet ref={bottomSheetRef} index={1} snapPoints={snapPoints}>
